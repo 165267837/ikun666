@@ -1,0 +1,450 @@
+:root{
+  /* 第 1 赛季「阳光漫游」：曙光黄 + 糖果粉 + 晴空蓝。
+     第 2 赛季「竹墨松林」的具体色值在文件末尾的 html[data-season="ink"] 里整体覆盖。 */
+  --yellow:#FFD93D; --yellow-deep:#FFB627; --pink:#FF7BAC; --blue:#4FC3F7;
+  --purple:#B57EDC; --green:#7BE08A; --red:#FF5A5A; --cyan:#22b6d6;
+  --ink:#3a2e4f; --ink2:#7a6a90;
+  --panel:rgba(255,255,255,0.94);
+  --shadow:0 12px 40px rgba(80,40,120,0.25);
+  /* 主色渐变：排行榜横幅 / 各列表色块用的是内联 style，读这两个变量，赛季一切就跟着变 */
+  --accent-a:#FFD93D; --accent-b:#FF7BAC; --accent-shadow:rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#bfe9ff;
+  font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);}
+#game-container{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;}
+#game-canvas{display:block;width:100%;height:100%;touch-action:none;}
+
+/* ===== 覆盖层 ===== */
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;}
+.overlay.hidden{display:none;}
+#hud{pointer-events:none;}
+
+/* =====================================================================
+   主界面（参照奶娃快跑布局）
+   ===================================================================== */
+#menu{pointer-events:none;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:calc(6px + env(safe-area-inset-top)) 12px 8px;}
+#menu button{pointer-events:auto;}
+
+/* 顶部标题栏（v3.9 瘦身：圆钮 38→30px，整条 header 让出 8px 高度） */
+.game-header{width:100%;max-width:520px;display:flex;align-items:center;gap:8px;}
+.hdr-btn{width:30px;height:30px;flex:0 0 30px;border:none;border-radius:50%;background:rgba(255,255,255,.92);
+  font-size:14px;font-weight:900;color:#5b4a7a;cursor:pointer;box-shadow:0 3px 0 rgba(140,110,190,.3);}
+.hdr-btn:active{transform:translateY(2px);}
+.hdr-title{flex:1;text-align:center;line-height:1.15;}
+.hdr-name{font-size:13px;font-weight:900;color:#fff;text-shadow:0 2px 5px rgba(70,40,110,.55);}
+.hdr-ver{font-size:9px;font-weight:700;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(70,40,110,.5);}
+
+/* 货币行（v3.9：40 → 32px。这一行原来比 header 还高，是「顶部压住场景」的主因） */
+.currency-row{width:100%;max-width:520px;display:flex;align-items:center;gap:6px;margin-top:7px;}
+.cur-circle{position:relative;width:32px;height:32px;flex:0 0 32px;border:none;border-radius:50%;
+  background:linear-gradient(180deg,#7fd7ff,#3aa8e0);font-size:15px;line-height:1;cursor:pointer;
+  box-shadow:0 2px 0 rgba(20,110,170,.35),inset 0 0 0 2px rgba(255,255,255,.75);}
+.cur-circle:active{transform:translateY(2px);}
+.crown-badge{background:linear-gradient(180deg,#ffe27a,#ffb300);}
+.cur-pill{position:relative;flex:1;display:flex;align-items:center;gap:5px;height:32px;padding:0 5px 0 10px;
+  border-radius:999px;background:rgba(255,255,255,.95);font-size:13px;font-weight:900;color:#6a4a00;
+  box-shadow:0 2px 0 rgba(140,110,190,.28);}
+.cur-ico{font-size:14px;}
+.cur-plus{margin-left:auto;width:22px;height:22px;border:none;border-radius:50%;cursor:pointer;
+  background:linear-gradient(180deg,#8ce68c,#3fb84f);color:#fff;font-size:13px;font-weight:900;line-height:1;
+  box-shadow:0 2px 0 #2e8f3c;}
+.cur-avatar{margin-left:auto;width:23px;height:23px;border:none;border-radius:50%;cursor:pointer;
+  background:linear-gradient(180deg,#7fd7ff,#3aa8e0);font-size:12px;line-height:1;box-shadow:0 2px 0 #2481b0;}
+
+/* 红点（跟着货币行一起缩，否则小圆钮上的红点会「顶出框」） */
+.badge-dot{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;
+  background:linear-gradient(180deg,#ff8080,#e01f1f);color:#fff;font-size:9px;font-weight:900;
+  line-height:14px;text-align:center;box-shadow:0 0 0 2px #fff;}
+.badge-dot::after{content:"!";}
+.badge-dot[hidden]{display:none;}
+
+/* 音效 / 音乐关闭态 */
+.hdr-btn.off,.cur-circle.off{filter:grayscale(.9);opacity:.6;}
+
+/* 活动横幅 */
+.banner-stack{width:100%;max-width:430px;display:flex;flex-direction:column;gap:4px;margin-top:7px;}
+.banner{display:flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:999px;
+  background:rgba(255,255,255,.9);font-size:11px;font-weight:800;color:#5b4a7a;
+  box-shadow:0 2px 0 rgba(140,110,190,.22);}
+.b-ico{font-size:12px;}
+.b-text{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.b-tag{font-size:10px;font-weight:900;color:#fff;background:linear-gradient(180deg,#ffb84d,#ff8a1f);
+  border-radius:999px;padding:2px 8px;}
+
+/* LOGO */
+.logo-wrap{text-align:center;margin-top:8px;}
+.logo{margin:0;font-size:clamp(28px,8vw,46px);font-weight:900;letter-spacing:2px;
+  background:linear-gradient(180deg,#fff6b0 0%,#ffd93d 38%,#ff9a2b 72%,#ff6a00 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:2px #fff;
+  filter:drop-shadow(0 3px 0 #b35a00) drop-shadow(0 6px 10px rgba(120,60,0,.35));}
+.logo-ribbon{display:inline-block;margin-top:2px;padding:2px 13px;border-radius:999px;
+  background:linear-gradient(90deg,#ff9ec2,#ff7bac);color:#fff;font-size:10px;font-weight:900;
+  box-shadow:0 3px 0 rgba(190,60,110,.35);}
+
+/* 功能宫格：v3.9 由 2×3 收成「一行 6 格」——
+   .menu-tiles 变成 6 列网格，两个 .side-col 用 display:contents 把子按钮「透传」给父网格，
+   于是 6 个入口落在同一行。HTML 一个字节都没动（id / data-tab / class 全部保留）。
+   省下的那一整行（约 60px）全部让给 3D 场景，奶龙的头和身子就露出来了。 */
+.menu-tiles{width:100%;max-width:430px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:6px;margin-top:9px;}
+.side-col{display:contents;}
+.side-btn{position:relative;border:none;border-radius:15px;cursor:pointer;padding:6px 2px 5px;
+  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(240,235,255,.94));
+  box-shadow:0 4px 0 rgba(140,110,190,.3),0 6px 14px rgba(90,60,140,.18);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.side-btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(140,110,190,.32);}
+/* 图标底衬：26px 圆角色块，emoji 坐在上面 —— 这是本次「换图标颜色」的落点 */
+.s-ico{width:26px;height:26px;border-radius:9px;font-size:16px;line-height:26px;text-align:center;
+  background:linear-gradient(180deg,#e8e2fb,#d6cbf5);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85),0 1px 3px rgba(90,60,140,.16);}
+.s-label{font-size:10px;font-weight:900;color:#5b4a7a;white-space:nowrap;}
+
+/* 图标配色：六个入口各一色。用 data-tab 属性选择器上色，
+   不需要给 HTML 增加任何 class（功能契约层零改动）。 */
+.side-btn[data-tab="world"] .s-ico{background:linear-gradient(180deg,#cfe9ff,#86c8ff);}
+.side-btn[data-tab="shop"]  .s-ico{background:linear-gradient(180deg,#e0d4ff,#b79bff);}
+.side-btn[data-tab="achv"]  .s-ico{background:linear-gradient(180deg,#ffe0bd,#ffb266);}
+.side-btn[data-tab="skins"] .s-ico{background:linear-gradient(180deg,#ffd6e8,#ff9ec6);}
+.side-btn[data-tab="rank"]  .s-ico{background:linear-gradient(180deg,#ffeeb4,#ffcf5c);}
+.side-btn[data-tab="settings"] .s-ico{background:linear-gradient(180deg,#c8f1ed,#8fdcd4);}
+
+/* 底部操作区：v3.9 把「随机换装 / 道具强化」并排成一行（原来是两个整宽大条），
+   加上矮一号的「点击开跑」与底栏，整块高度从约 260px 收到约 170px。 */
+.menu-bottom{width:100%;max-width:430px;margin-top:auto;display:flex;flex-wrap:wrap;gap:6px;}
+.pill-btn{border:none;border-radius:999px;cursor:pointer;}
+.pill-btn:active{transform:translateY(2px);}
+.pill-btn.ghost{order:1;flex:1 1 0;min-width:0;background:rgba(255,255,255,.92);color:#5b4a7a;
+  font-size:11.5px;font-weight:800;padding:8px 8px;box-shadow:0 3px 0 rgba(140,110,190,.26);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pill-btn.cyan{order:2;flex:1.25 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
+  gap:0;padding:6px 8px;background:linear-gradient(180deg,#5fdcf0,#22b6d6);color:#fff;
+  box-shadow:0 3px 0 #1495b3;}
+.pb-title{font-size:12px;font-weight:900;white-space:nowrap;}
+.pb-sub{font-size:9px;font-weight:700;opacity:.92;white-space:nowrap;}
+
+.btn-run{order:3;flex:1 1 100%;border:none;border-radius:999px;cursor:pointer;margin:0 0 8px;padding:12px;
+  font-size:19px;font-weight:900;letter-spacing:2px;color:#fff;text-shadow:0 2px 4px rgba(0,60,90,.35);
+  background:linear-gradient(180deg,#5ee4f7,#1fb0e0 62%,#189bd0);
+  box-shadow:0 6px 0 #1079a8,0 8px 18px rgba(20,120,170,.34);}
+.btn-run:active{transform:translateY(3px);box-shadow:0 3px 0 #1079a8;}
+
+/* 底部导航（图标也换成彩色圆角色块，中间的「奔跑」保留金色胶囊） */
+.bottom-nav{order:4;flex:1 1 100%;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;gap:3px;
+  padding:6px 6px 5px;border-radius:18px;background:rgba(255,255,255,.58);
+  backdrop-filter:blur(6px);box-shadow:0 6px 20px rgba(80,50,130,.18);}
+.nav-item{position:relative;border:none;background:transparent;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px;padding:1px 0;border-radius:14px;}
+.nav-item span{width:26px;height:26px;border-radius:9px;font-size:16px;line-height:26px;text-align:center;
+  background:linear-gradient(180deg,#e8e2fb,#d6cbf5);}
+.nav-item i{font-style:normal;font-size:9.5px;font-weight:900;color:#4a3d63;}
+.nav-item.center{background:linear-gradient(180deg,#ffd93d,#ff9a3d);border-radius:15px;
+  padding:6px 2px 5px;transform:translateY(-8px);box-shadow:0 5px 0 #d97b00,0 7px 14px rgba(190,110,0,.3);}
+.nav-item.center span{width:auto;height:auto;background:none;box-shadow:none;font-size:19px;}
+.nav-item.center i{color:#5a3d00;font-size:10px;}
+.nav-item[data-tab="skins"]    span{background:linear-gradient(180deg,#ffd6e8,#ff9ec6);}
+.nav-item[data-tab="shop"]     span{background:linear-gradient(180deg,#e0d4ff,#b79bff);}
+.nav-item[data-tab="achv"]     span{background:linear-gradient(180deg,#ffe0bd,#ffb266);}
+.nav-item[data-tab="settings"] span{background:linear-gradient(180deg,#c8f1ed,#8fdcd4);}
+
+/* 矮屏（横屏手机 / 小窗）压缩一档，避免底部导航被挤出可视区 */
+@media (max-height:680px){
+  .logo{font-size:clamp(22px,6.4vw,34px);letter-spacing:1.5px;}
+  .logo-ribbon{font-size:9px;padding:2px 10px;}
+  .menu-tiles{margin-top:7px;gap:5px;}
+  .side-btn{padding:5px 2px 4px;border-radius:13px;}
+  .s-ico{width:23px;height:23px;font-size:14px;line-height:23px;border-radius:8px;}
+  .s-label{font-size:9px;}
+  .banner-stack{margin-top:5px;}
+  .banner{height:24px;font-size:10px;}
+  .btn-run{padding:10px;font-size:17px;}
+  .pill-btn.ghost{font-size:11px;padding:7px 6px;}
+  .pill-btn.cyan{padding:5px 6px;}
+  .pb-title{font-size:11px;}
+  .nav-item span{width:23px;height:23px;font-size:14px;line-height:23px;}
+}
+
+/* =====================================================================
+   通用面板 / 按钮
+   ===================================================================== */
+.panel{background:var(--panel);border-radius:24px;padding:24px 22px;width:min(88vw,400px);
+  text-align:center;box-shadow:var(--shadow);backdrop-filter:blur(8px);animation:pop .22s ease;}
+@keyframes pop{from{transform:scale(.92);opacity:0;}to{transform:scale(1);opacity:1;}}
+h2{margin:0;font-size:24px;font-weight:800;}
+.btn{display:block;width:100%;margin:10px 0;padding:14px;border:none;border-radius:16px;
+  font-size:17px;font-weight:800;cursor:pointer;transition:transform .08s;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(180deg,var(--yellow),var(--yellow-deep));color:#5a3d00;box-shadow:0 6px 0 #d99a00;}
+.btn-primary:active{box-shadow:0 2px 0 #d99a00;}
+.btn-ghost{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px #e6d8f5;}
+.btn-gold{background:linear-gradient(180deg,#ffe27a,#ffb300);color:#5a3d00;box-shadow:0 6px 0 #c98a00;}
+.btn-gold:active{box-shadow:0 2px 0 #c98a00;}
+.stat-row{display:flex;gap:12px;justify-content:center;margin:12px 0;}
+.stat{flex:1;background:#fff;border-radius:16px;padding:10px;box-shadow:inset 0 0 0 2px #ffe9a8;}
+.stat-label{display:block;font-size:12px;color:#a08fb8;}
+.stat-value{display:block;font-size:22px;font-weight:800;}
+.record{display:inline-block;background:linear-gradient(90deg,#ffd93d,#ff9a3d);color:#5a3d00;
+  font-weight:900;border-radius:999px;padding:6px 16px;margin-bottom:10px;box-shadow:var(--shadow);
+  animation:pulse 1s ease infinite alternate;}
+@keyframes pulse{to{transform:scale(1.06);}}
+
+/* =====================================================================
+   结算界面里的「奶龙大笑」视频（v4.1）
+   ---------------------------------------------------------------------
+   只写 height + width:auto：宽度由元素自身的 480:644 定，于是窄屏靠 vh
+   自动收缩，绝不会把面板顶出屏幕（结算面板本来就有按钮 + 两行统计，很高）。
+   视频背景接近纯白、面板也是白的，所以用「白缝 + 金圈」把卡片摘出来，
+   否则两者会糊在一起。
+   ===================================================================== */
+.go-video{display:block;height:min(26vh,230px);width:auto;aspect-ratio:480/644;
+  margin:0 auto 8px;border-radius:18px;object-fit:cover;background:#fff;
+  box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(255,182,39,.92),0 10px 22px rgba(80,40,120,.34);}
+.go-video.hidden{display:none;}
+/* 矮屏收缩两档，与主界面 .banner-stack 的处理方式一致 */
+@media (max-height:680px){
+  .go-video{height:min(20vh,170px);border-radius:15px;}
+}
+@media (max-height:600px){
+  .go-video{height:min(15vh,120px);border-radius:13px;}
+}
+
+/* ===== 弹窗 ===== */
+.modal-panel{width:min(92vw,440px);max-height:82vh;display:flex;flex-direction:column;padding:18px 16px;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.modal-head h2{font-size:20px;}
+.btn-close{width:36px;height:36px;border:none;border-radius:12px;background:#f1e9fb;color:var(--ink);
+  font-size:16px;font-weight:900;cursor:pointer;}
+.modal-body{overflow-y:auto;text-align:left;-webkit-overflow-scrolling:touch;}
+.modal-note{font-size:12px;color:var(--ink2);margin:0 0 10px;}
+.list{display:flex;flex-direction:column;gap:9px;}
+.item{display:flex;align-items:center;gap:11px;background:#fff;border-radius:16px;padding:11px 12px;
+  box-shadow:inset 0 0 0 2px #f0e6fb;}
+.item.owned{box-shadow:inset 0 0 0 2px #cdf3d5;}
+.item.active{box-shadow:inset 0 0 0 2px var(--yellow);background:#fffdf2;}
+.swatch{width:38px;height:38px;border-radius:12px;flex:0 0 38px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);}
+.item-info{flex:1;min-width:0;}
+.item-name{font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;}
+.item-desc{font-size:11px;color:var(--ink2);margin-top:2px;}
+.act{border:none;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:800;cursor:pointer;
+  white-space:nowrap;background:#f1e9fb;color:var(--ink);}
+.act.buy{background:linear-gradient(180deg,var(--yellow),var(--yellow-deep));color:#5a3d00;}
+.act.on{background:linear-gradient(180deg,var(--green),#4fbf66);color:#0f4d22;}
+.act.claim{background:linear-gradient(180deg,#ffe27a,#ffb300);color:#5a3d00;animation:pulse 1s ease infinite alternate;}
+.act[disabled]{opacity:.55;cursor:default;}
+.tag{font-size:10px;font-weight:900;border-radius:999px;padding:2px 7px;background:#ffe9a8;color:#8a5a00;}
+.tag.new{background:#ffd0e2;color:#a02c60;}
+.progress{height:7px;border-radius:4px;background:#eee;overflow:hidden;margin-top:6px;}
+.progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--blue));}
+.progress.done > i{background:linear-gradient(90deg,#ffd93d,#ff9a3d);}
+.rank-row{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:10px 12px;
+  box-shadow:inset 0 0 0 2px #f0e6fb;font-size:13px;}
+.rank-no{font-weight:900;width:24px;color:var(--ink2);}
+.rank-no.top1{color:#e0a800;}
+.rank-score{font-weight:900;margin-left:auto;}
+.rank-sub{font-size:11px;color:var(--ink2);}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;
+  border-radius:14px;padding:12px;box-shadow:inset 0 0 0 2px #f0e6fb;font-size:14px;font-weight:700;}
+.switch{width:52px;height:30px;border-radius:999px;background:#ddd;position:relative;cursor:pointer;
+  border:none;transition:background .18s;flex:0 0 52px;}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#fff;transition:left .18s;box-shadow:0 2px 5px rgba(0,0,0,.2);}
+.switch.on{background:linear-gradient(90deg,var(--green),#4fbf66);}
+.switch.on::after{left:25px;}
+.seg{display:flex;gap:6px;}
+.seg button{border:none;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:800;
+  background:#f1e9fb;color:var(--ink);cursor:pointer;}
+.seg button.on{background:linear-gradient(180deg,var(--yellow),var(--yellow-deep));color:#5a3d00;}
+.section-title{font-size:12px;font-weight:900;color:var(--ink2);margin:14px 0 7px;letter-spacing:1px;}
+
+/* ---------- 兑换码（设置面板内）---------- */
+/* 不用 .btn：那个类带 width:100% / margin:10px 0，会和输入框抢宽度。
+   高度固定 44px（触摸可用），输入框 flex:1 自适应，按钮 flex:0 0 auto 不被压扁。 */
+.redeem{display:flex;gap:8px;align-items:stretch;}
+.redeem-input{flex:1;min-width:0;height:44px;padding:0 13px;border:none;border-radius:14px;
+  background:#fff;color:var(--ink);font-size:15px;font-weight:800;font-family:inherit;
+  box-shadow:inset 0 0 0 2px #e6d8f5;outline:none;-webkit-appearance:none;appearance:none;}
+.redeem-input::placeholder{color:#b9aecb;font-weight:700;}
+.redeem-input:focus{box-shadow:inset 0 0 0 2px var(--yellow-deep),0 0 0 3px rgba(255,182,39,.2);}
+.redeem-btn{flex:0 0 auto;height:44px;margin:0;padding:0 20px;border:none;border-radius:14px;
+  cursor:pointer;font-family:inherit;font-size:14px;font-weight:900;color:#5a3d00;
+  background:linear-gradient(180deg,var(--yellow),var(--yellow-deep));box-shadow:0 4px 0 #d99a00;}
+.redeem-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #d99a00;}
+
+/* ===== HUD ===== */
+.hud-top{position:absolute;top:max(14px,env(safe-area-inset-top));left:14px;right:14px;
+  display:flex;justify-content:space-between;align-items:flex-start;}
+.hud-score{background:var(--panel);border-radius:16px;padding:8px 14px;box-shadow:var(--shadow);}
+.hud-line{display:flex;align-items:baseline;gap:6px;}
+.hud-label{font-size:12px;color:#9a8ab0;}
+#hud-score{font-size:26px;font-weight:900;}
+.hud-line.small{font-size:12px;color:#7a6a90;}
+.hud-coins{background:var(--panel);border-radius:16px;padding:8px 14px;font-weight:900;font-size:20px;
+  display:flex;align-items:center;gap:6px;box-shadow:var(--shadow);}
+.coin-ico{font-size:17px;}
+.hud-powerups{position:absolute;top:150px;left:14px;display:flex;flex-direction:column;gap:8px;}
+.pu-chip{background:var(--panel);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;
+  box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;}
+.pu-bar{width:60px;height:6px;border-radius:3px;background:#eee;overflow:hidden;}
+.pu-bar>i{display:block;height:100%;background:var(--green);}
+.combo{position:absolute;top:112px;left:50%;transform:translateX(-50%);background:var(--panel);
+  border-radius:999px;padding:7px 18px;font-weight:900;font-size:16px;box-shadow:var(--shadow);
+  color:#e06a00;animation:pop .18s ease;}
+.combo.hidden{display:none;}
+.combo-x{margin-left:8px;color:#a02c60;font-size:14px;}
+.pop{position:absolute;bottom:190px;left:0;right:0;text-align:center;font-weight:900;font-size:19px;
+  color:#fff;text-shadow:0 2px 8px rgba(40,10,70,.55),0 0 2px rgba(40,10,70,.9);pointer-events:none;
+  opacity:0;}
+/* 动画挂 .show 上，这样 JS 每次重加类名就能重新播放（连续触发时不会只播第一次） */
+.pop.show{animation:popUp .85s ease-out forwards;}
+.pop.pad{color:#8ff0ff;}
+.pop.big{color:#fff2b0;font-size:25px;}
+.pop.map{color:#bdf0ff;font-size:24px;}
+@keyframes popUp{
+  0%{opacity:0;transform:translateY(16px) scale(.85);}
+  18%{opacity:1;transform:translateY(0) scale(1.06);}
+  70%{opacity:1;transform:translateY(-8px) scale(1);}
+  100%{opacity:0;transform:translateY(-26px) scale(.98);}
+}
+/* 冲刺段横幅：顶在连击上方，带一条倒计时进度条 */
+.rush{position:absolute;top:150px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;
+  background:linear-gradient(90deg,#ff8a3d,#ff5a8a);color:#fff;border-radius:999px;padding:7px 16px;
+  font-weight:900;font-size:14px;box-shadow:0 8px 24px rgba(255,90,138,.4);}
+.rush.hidden{display:none;}
+.rush-ico{font-size:16px;animation:rushSpin .6s linear infinite;}
+@keyframes rushSpin{from{transform:rotate(-12deg);}to{transform:rotate(12deg);}}
+.rush-bar{width:64px;height:6px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden;}
+.rush-bar>i{display:block;height:100%;width:100%;background:#fff;transition:width .1s linear;}
+.btn-pause{position:absolute;bottom:18px;right:14px;width:52px;height:52px;border:none;border-radius:16px;
+  background:var(--panel);font-size:20px;box-shadow:var(--shadow);pointer-events:auto;cursor:pointer;}
+.touch-hint{position:absolute;bottom:82px;left:0;right:0;text-align:center;font-size:12px;color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.45);pointer-events:none;}
+
+/* Toast */
+.toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(58,46,79,.92);
+  color:#fff;border-radius:16px;padding:12px 22px;font-size:15px;font-weight:800;z-index:30;
+  pointer-events:none;animation:pop .2s ease;}
+.toast.hidden{display:none;}
+
+@media (max-height:760px){
+  .logo{font-size:clamp(24px,7vw,38px);letter-spacing:1.5px;}
+  .menu-tiles{gap:5px;margin-top:7px;}
+  /* 宫格化之后 .side-btn 变成了 grid 单元，宽度必须交给 grid 去拉伸 ——
+     这里只收紧内边距，绝不能再写死 width/height：
+     旧的 56px 会把格子压成小方块（390x844 上也曾被压到 54px）。 */
+  .side-btn{border-radius:13px;padding:5px 2px 4px;}
+  .s-ico{width:23px;height:23px;font-size:14px;line-height:23px;border-radius:8px;}
+  .btn-run{font-size:17px;padding:10px;}
+  .currency-row{margin-top:6px;}
+}
+/* 只有真的挤到放不下了才收掉任务横幅。
+   旧版是 760px 就无条件 display:none，而实测 660px 高度里宫格与底部之间还有富余空档，
+   白白丢掉了「皮肤收集 1/11」「成就 0/9」这两行信息。 */
+@media (max-height:620px){
+  .banner-stack{display:none;}
+  .logo-ribbon{display:none;}
+  .logo{font-size:clamp(22px,6.4vw,32px);}
+  .menu-tiles{margin-top:5px;}
+}
+@media (max-width:390px){
+  .menu-tiles{gap:4px;}
+  .side-btn{border-radius:12px;padding:5px 1px 4px;}
+  .s-ico{width:21px;height:21px;font-size:13px;line-height:21px;border-radius:7px;}
+  .s-label{font-size:8.5px;}
+  .cur-pill{font-size:12px;}
+  .hdr-name{font-size:12px;}
+  .pill-btn.ghost{font-size:11px;}
+  .nav-item i{font-size:9px;}
+}
+
+/* ===== 启动失败提示（绝不静默） ===== */
+#boot-error{position:absolute;left:12px;right:12px;bottom:12px;z-index:60;
+  background:rgba(58,46,79,.96);color:#ffe9a8;border-radius:14px;padding:12px 16px;
+  font-size:12px;font-weight:700;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.35);
+  max-height:54vh;overflow:auto;}
+#boot-error b{display:block;font-size:15px;color:#fff;margin-bottom:6px;}
+#boot-error pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:inherit;}
+
+/* =====================================================================
+   赛季主题层（双赛季）——
+   ---------------------------------------------------------------------
+   第 1 赛季「阳光漫游」默认生效：就是 :root + 本文件前半部分的糖果系（黄 / 粉 / 紫）。
+   第 2 赛季「竹墨松林」解锁后，main.js 会给 <html> 打上 data-season="ink"，
+   下面这一整段（每条选择器都带 html[data-season="ink"] 前缀，特异性更高 ⇒ 后写胜出）
+   就整段接管界面：雾白打底、竹青做主色、墨绿收边，暖灯橙只当点缀。
+   换赛季 = 改这一段 + main.js 的 SEASONS / THEMES，前面 400 行一个字都不用动。
+   注：游戏标题 .logo 的金黄渐变保留不动 —— 那是「奶龙」这个角色本身的颜色，
+   一整片水墨里正好需要一个暖色焦点，不该跟着赛季一起变绿。
+   =====================================================================
+html,html[data-season="ink"] body{background:#e9f2ec;}
+/* 顶栏：底色从浅蓝变成更浅的雾白，原来的白字会彻底看不见 —— 改成墨色 + 白色柔光 */
+html[data-season="ink"] .hdr-name{color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.9),0 2px 7px rgba(255,255,255,.75);}
+html[data-season="ink"] .hdr-ver{color:var(--ink2);text-shadow:0 1px 0 rgba(255,255,255,.8);}
+html[data-season="ink"] .hdr-btn{color:#3c5246;box-shadow:0 3px 0 rgba(90,125,100,.28);}
+html[data-season="ink"] .logo{filter:drop-shadow(0 3px 0 #8a5a10) drop-shadow(0 7px 12px rgba(32,54,40,.42));}
+/* 赛季绶带：这一条就是「竹墨松林 · 第 1 赛季」 */
+html[data-season="ink"] .logo-ribbon{background:linear-gradient(90deg,#8fae86,#4e7d42);box-shadow:0 3px 0 rgba(52,92,62,.38);}
+/* 货币行 */
+html[data-season="ink"] .cur-circle{background:linear-gradient(180deg,#a9c9b0,#6f9c82);
+  box-shadow:0 2px 0 rgba(50,90,70,.36),inset 0 0 0 2px rgba(255,255,255,.78);}
+html[data-season="ink"] .crown-badge{background:linear-gradient(180deg,#f0d79a,#c99a45);}
+html[data-season="ink"] .cur-plus{background:linear-gradient(180deg,#8fce8a,#4f9a56);box-shadow:0 2px 0 #3a7a44;}
+html[data-season="ink"] .cur-avatar{background:linear-gradient(180deg,#a9c9b0,#6f9c82);box-shadow:0 2px 0 #4c7a62;}
+html[data-season="ink"] .cur-pill,html[data-season="ink"] .banner{color:#3c5246;}
+html[data-season="ink"] .banner{box-shadow:0 2px 0 rgba(90,125,100,.22);}
+html[data-season="ink"] .b-tag{background:linear-gradient(180deg,#e8b96a,#c98a2e);}
+/* 功能宫格 / 底部导航的图标底衬：全部收到竹青 · 石青 · 暖灯三色里 */
+html[data-season="ink"] .s-ico,html[data-season="ink"] .nav-item span{background:linear-gradient(180deg,#dfe9dc,#c3d6c4);}
+html[data-season="ink"] .side-btn[data-tab="world"]    .s-ico{background:linear-gradient(180deg,#dcecdc,#a7c8ab);}
+html[data-season="ink"] .side-btn[data-tab="shop"]     .s-ico{background:linear-gradient(180deg,#e2e8dd,#b6c7b4);}
+html[data-season="ink"] .side-btn[data-tab="achv"]     .s-ico{background:linear-gradient(180deg,#f0e4c8,#d8b878);}
+html[data-season="ink"] .side-btn[data-tab="skins"]    .s-ico{background:linear-gradient(180deg,#e6e9d8,#bfccae);}
+html[data-season="ink"] .side-btn[data-tab="rank"]     .s-ico{background:linear-gradient(180deg,#f2e2b8,#dcb469);}
+html[data-season="ink"] .side-btn[data-tab="settings"] .s-ico{background:linear-gradient(180deg,#dce8e4,#a9c4bc);}
+html[data-season="ink"] .nav-item[data-tab="skins"]    span{background:linear-gradient(180deg,#e6e9d8,#bfccae);}
+html[data-season="ink"] .nav-item[data-tab="shop"]     span{background:linear-gradient(180deg,#e2e8dd,#b6c7b4);}
+html[data-season="ink"] .nav-item[data-tab="achv"]     span{background:linear-gradient(180deg,#f0e4c8,#d8b878);}
+html[data-season="ink"] .nav-item[data-tab="settings"] span{background:linear-gradient(180deg,#dce8e4,#a9c4bc);}
+html[data-season="ink"] .s-label,html[data-season="ink"] .nav-item i{color:#3c5246;}
+html[data-season="ink"] .pill-btn.ghost{color:#3c5246;box-shadow:0 3px 0 rgba(90,125,100,.26);}
+/* 底部两个大按钮 */
+html[data-season="ink"] .btn-run{background:linear-gradient(180deg,#8fc98a,#4e8b62 62%,#3f7a55);color:#fff;
+  text-shadow:0 2px 4px rgba(24,52,36,.42);
+  box-shadow:0 6px 0 #2f6046,0 8px 18px rgba(38,80,58,.34);}
+html[data-season="ink"] .btn-run:active{box-shadow:0 3px 0 #2f6046;}
+html[data-season="ink"] .pill-btn.cyan{background:linear-gradient(180deg,#7fb9a8,#4e8b7a);box-shadow:0 3px 0 #3a6d60;}
+html[data-season="ink"] .nav-item.center{background:linear-gradient(180deg,#8fae86,#4e7d42);
+  box-shadow:0 5px 0 #36603c,0 7px 14px rgba(44,88,58,.3);}
+html[data-season="ink"] .nav-item.center i{color:#f4fbf4;}
+/* 面板内的浅色底衬：从紫调换成纸白 / 石青 */
+html[data-season="ink"] .btn-ghost{box-shadow:inset 0 0 0 2px #d3e0d5;}
+html[data-season="ink"] .btn-close,html[data-season="ink"] .act,html[data-season="ink"] .seg button{background:#eaf0ea;}
+html[data-season="ink"] .btn-primary,html[data-season="ink"] .act.buy,html[data-season="ink"] .redeem-btn,html[data-season="ink"] .seg button.on{color:#f4fbf4;}
+html[data-season="ink"] .btn-primary{box-shadow:0 6px 0 #33603c;}
+html[data-season="ink"] .btn-primary:active{box-shadow:0 2px 0 #33603c;}
+html[data-season="ink"] .redeem-btn{box-shadow:0 4px 0 #33603c;}
+html[data-season="ink"] .redeem-btn:active{box-shadow:0 2px 0 #33603c;}
+html[data-season="ink"] .act.on{background:linear-gradient(180deg,#8fce8a,#4f9a56);color:#0f3d22;}
+html[data-season="ink"] .switch.on{background:linear-gradient(90deg,#6f9c58,#4f8b5c);}
+html[data-season="ink"] .redeem-input{box-shadow:inset 0 0 0 2px #d3e0d5;}
+html[data-season="ink"] .redeem-input::placeholder{color:#a8b6ac;}
+html[data-season="ink"] .redeem-input:focus{box-shadow:inset 0 0 0 2px var(--yellow-deep),0 0 0 3px rgba(78,125,66,.2);}
+html[data-season="ink"] .item,html[data-season="ink"] .rank-row,html[data-season="ink"] .setting{box-shadow:inset 0 0 0 2px #e4ece5;}
+html[data-season="ink"] .item.owned{box-shadow:inset 0 0 0 2px #c6e3ca;}
+html[data-season="ink"] .item.active{background:#f4fbf4;}
+html[data-season="ink"] .stat{box-shadow:inset 0 0 0 2px #d9e8dc;}
+html[data-season="ink"] .tag{background:#e6eccf;color:#5c6f2e;}
+html[data-season="ink"] .tag.new{background:#e0e6dc;color:#4c6b56;}
+html[data-season="ink"] .record{background:linear-gradient(90deg,#8fae86,#4e7d42);color:#f4fbf4;}
+html[data-season="ink"] .progress.done > i{background:linear-gradient(90deg,#8fae86,#4e7d42);}
+html[data-season="ink"] .rush{background:linear-gradient(90deg,#e8a04a,#c96a3f);box-shadow:0 8px 24px rgba(180,110,60,.38);}
+html[data-season="ink"] .combo{color:#9a6a1e;}
+html[data-season="ink"] .combo-x{color:#3f6b4a;}
+html[data-season="ink"] .hud-label,html[data-season="ink"] .stat-label{color:#84968b;}
+html[data-season="ink"] .hud-line.small{color:#6b7d74;}
+html[data-season="ink"] .toast{background:rgba(38,54,46,.93);}
+/* 结算视频的白底卡片：金圈改成竹青圈，跟赛季对上 */
+html[data-season="ink"] .go-video{box-shadow:0 0 0 3px #fff,0 0 0 6px rgba(122,168,110,.95),0 10px 22px rgba(40,68,52,.32);}
+/* 第 2 赛季的主色变量（第 1 赛季用上面 :root 里的金 / 粉） */
+html[data-season="ink"]{--accent-a:#8fae86;--accent-b:#4e7d42;--accent-shadow:rgba(52,92,62,.35);}

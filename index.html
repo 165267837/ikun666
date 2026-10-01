@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html data-season="sun" lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>奶龙跑酷</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="style.css" />
+<!-- three.js 使用本地副本（libs/three.module.js，r160），不依赖 CDN，离线可用。
+     如果想改回 CDN，把下面的 "./libs/three.module.js" 换成
+     "https://unpkg.com/three@0.160.0/build/three.module.js" 即可。 -->
+<!-- 背景音乐（v4.0 起）也是本地资源：libs/bgm.m4a，由 main.js 的 CONFIG.BGM_SRC 指定，
+     用 <audio> 元素播放，不写进 HTML。换成别的曲子只需替换该文件。 -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./libs/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+  <script>
+  /* 启动看门狗：如果 three.js 或 main.js 没能加载 / 初始化，
+     8 秒后显式报错，而不是留下一个「菜单看得见、所有按钮都没反应」的静默死界面。 */
+  window.__nailongBooted = false;
+  window.__nailongFail = function (err) {
+    var msg = (err && (err.message || err)) || '未知错误';
+    var box = document.getElementById('boot-error');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'boot-error';
+      (document.getElementById('game-container') || document.body).appendChild(box);
+      box.innerHTML = '<b>启动失败</b><pre></pre>';
+    }
+    var pre = box.querySelector('pre');
+    if (pre) {
+      pre.textContent = String(msg) +
+        '\n\n请依次检查：\n' +
+        '1) 是否用 http 打开（ES Module 在 file:// 下会被浏览器 CORS 拦掉）；\n' +
+        '2) libs/three.module.js 与 main.js 是否都在同级目录；\n' +
+        '3) 按 F12 看 Console 里的具体报错。';
+    }
+  };
+  window.addEventListener('error', function (e) {
+    if (!window.__nailongBooted) {
+      window.__nailongFail((e && (e.message || (e.target && e.target.src))) || 'resource error');
+    }
+  }, true);
+  setTimeout(function () {
+    if (!window.__nailongBooted) window.__nailongFail('加载超时：脚本未能在 8 秒内完成初始化。');
+  }, 8000);
+  </script>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- ===================== 主界面 ===================== -->
+    <!-- v3.9 布局：品牌上移；6 个功能入口收成「一行 6 格」（.menu-tiles 用 6 列网格 +
+         .side-col{display:contents} 把子按钮透传给父网格）；「随机换装 / 道具强化」并排成一行；
+         任务横幅收在宫格下方。HTML 结构与 v3.5 逐字一致（id / data-tab / class 全保留），
+         只换了样式与摆放方式。 -->
+    <div id="menu" class="overlay">
+
+      <!-- 顶部标题栏 -->
+      <div class="game-header">
+        <button id="btn-sound" class="hdr-btn">🔊</button>
+        <div class="hdr-title">
+          <div class="hdr-name">奶龙跑酷 · 阳光漫游</div>
+          <div class="hdr-ver">Nailong Parkour v4.3</div>
+        </div>
+        <button id="btn-about" class="hdr-btn">⋯</button>
+      </div>
+
+      <!-- 货币行 -->
+      <div class="currency-row">
+        <button id="btn-crown" class="cur-circle crown-badge">👑<em class="badge-dot" id="dot-crown" hidden></em></button>
+        <div class="cur-pill">
+          <span class="cur-ico">🪙</span><span id="menu-coins">0</span>
+          <button id="btn-plus" class="cur-plus">＋</button>
+        </div>
+        <div class="cur-pill">
+          <span class="cur-ico">🏆</span><span id="menu-best">0</span>
+          <button id="btn-rank" class="cur-avatar">👤</button>
+        </div>
+        <button id="btn-music" class="cur-circle">🎵</button>
+      </div>
+
+      <!-- LOGO（上移到顶部：进主界面第一眼就看到游戏名） -->
+      <div class="logo-wrap">
+        <h1 class="logo">奶龙跑酷</h1>
+        <div class="logo-ribbon">☀️ 阳光漫游 · 第 1 赛季</div>
+      </div>
+
+      <!-- 功能宫格：这两列原来是悬浮在左右边缘的绝对定位竖排（会压住 LOGO 区），
+           现在合成居中的 2×3 宫格 —— 两个 .side-col 各占一行、每行 3 格。 -->
+      <div class="menu-tiles">
+        <div class="side-col left">
+          <button class="side-btn" data-tab="world"><span class="s-ico">🗺️</span><span class="s-label">世界地图</span></button>
+          <button class="side-btn" data-tab="shop"><span class="s-ico">🎒</span><span class="s-label">神秘商店</span><em class="badge-dot" id="dot-shop" hidden></em></button>
+          <button class="side-btn" data-tab="achv"><span class="s-ico">🏅</span><span class="s-label">挑战之路</span><em class="badge-dot" id="dot-chal" hidden></em></button>
+        </div>
+        <div class="side-col right">
+          <button class="side-btn" data-tab="skins"><span class="s-ico">👕</span><span class="s-label">奶龙皮肤</span></button>
+          <button class="side-btn" data-tab="rank"><span class="s-ico">👑</span><span class="s-label">排行榜</span></button>
+          <button class="side-btn" data-tab="settings"><span class="s-ico">⚙️</span><span class="s-label">游戏设置</span></button>
+        </div>
+      </div>
+
+      <!-- 活动横幅（收在宫格下方，当作「今日任务」条） -->
+      <div class="banner-stack">
+        <div class="banner">
+          <span class="b-ico">🏁</span>
+          <span class="b-text">今日挑战 · 跑满 500 米</span>
+          <span class="b-tag" id="b-runs">共 0 局</span>
+        </div>
+        <div class="banner">
+          <span class="b-ico">🌈</span>
+          <span class="b-text">皮肤收集 · <b id="b-skins">1/11</b></span>
+          <span class="b-tag" id="b-achv">成就 0/9</span>
+        </div>
+      </div>
+
+      <!-- 底部操作区 -->
+      <div class="menu-bottom">
+        <button class="pill-btn ghost" id="btn-random">🎲 随机换装 · <span id="menu-skin-name">奶龙</span></button>
+        <button class="pill-btn cyan" id="btn-boost">
+          <span class="pb-title">🧰 道具强化 · 我要第一</span>
+          <span class="pb-sub" id="boost-sub">总等级 Lv.0 · 点击强化</span>
+        </button>
+        <button id="btn-play" class="btn-run">点击开跑 ▶</button>
+
+        <nav class="bottom-nav">
+          <button class="nav-item" data-tab="skins"><span>🛍️</span><i>商城</i></button>
+          <button class="nav-item" data-tab="shop"><span>🧰</span><i>道具</i><em class="badge-dot" id="dot-nav-shop" hidden></em></button>
+          <button class="nav-item center" id="nav-run"><span>🏃</span><i>奔跑</i></button>
+          <button class="nav-item" data-tab="achv"><span>🏆</span><i>成就</i><em class="badge-dot" id="dot-nav-achv" hidden></em></button>
+          <button class="nav-item" data-tab="settings"><span>⚙️</span><i>设置</i></button>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ===================== 弹窗 ===================== -->
+    <!-- 各 tab 的内容全由 UIManager.renderXxx() 生成、塞进 #modal-body。
+         「设置 → 兑换码」的输入框也一样是动态生成的（#redeem-input / #redeem-btn）——
+         这里刻意不放静态标记，以免破坏「HTML 结构与 v3.5 逐字一致」这条约定。 -->
+    <div id="modal" class="overlay hidden">
+      <div class="panel modal-panel">
+        <div class="modal-head">
+          <h2 id="modal-title">皮肤</h2>
+          <button id="modal-close" class="btn-close">✕</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- ===================== HUD ===================== -->
+    <div id="hud" class="overlay hidden">
+      <div class="hud-top">
+        <div class="hud-score">
+          <div class="hud-line"><span class="hud-label">分数</span><span id="hud-score">0</span></div>
+          <div class="hud-line small"><span class="hud-label">距离</span><span id="hud-distance">0</span> m</div>
+        </div>
+        <div class="hud-coins"><span class="coin-ico">🪙</span><span id="hud-coins">0</span></div>
+      </div>
+      <div id="combo" class="combo hidden">连击 <span id="combo-n">0</span><span class="combo-x" id="combo-x">×1.0</span></div>
+      <div id="rush" class="rush hidden">
+        <span class="rush-ico">⚡</span>
+        <span class="rush-title">冲刺段</span>
+        <span id="rush-text">金币 ×2</span>
+        <div class="rush-bar"><i id="rush-fill"></i></div>
+      </div>
+      <div id="pop" class="pop"></div>
+      <div id="powerups" class="hud-powerups"></div>
+      <button id="btn-pause" class="btn-pause">⏸</button>
+    </div>
+
+    <!-- ===================== 暂停 ===================== -->
+    <div id="pause" class="overlay hidden">
+      <div class="panel">
+        <h2>已暂停</h2>
+        <button id="btn-resume" class="btn btn-primary">继续</button>
+        <button id="btn-restart" class="btn btn-ghost">重新开始</button>
+        <button id="btn-quit" class="btn btn-ghost">返回主菜单</button>
+      </div>
+    </div>
+
+    <!-- ===================== 结算 ===================== -->
+    <div id="gameover" class="overlay hidden">
+      <div class="panel">
+        <!-- 奶龙大笑的小视频（v4.1）。源素材是 9:16 竖屏、上下带黑边，已在 ffmpeg 里
+             裁成 480x644（黑边连同左上角水印一起去掉）。
+             静音播放：背景音乐是全局的，两条音轨同时响会打架。
+             播放/暂停由 UIManager._goVideo() 跟着遮罩的显隐走。 -->
+        <video id="go-video" class="go-video" src="./libs/gameover.mp4"
+               muted loop playsinline preload="metadata" aria-hidden="true"></video>
+        <div id="go-record" class="record hidden">🎉 新纪录！</div>
+        <h2 id="go-title">游戏结束</h2>
+        <div class="stat-row">
+          <div class="stat"><span class="stat-label">本局分数</span><span id="go-score" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">距离</span><span id="go-distance" class="stat-value">0</span></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><span class="stat-label">本局金币</span><span id="go-coins" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">最高分</span><span id="go-best" class="stat-value">0</span></div>
+        </div>
+        <button id="btn-revive" class="btn btn-gold hidden">复活（消耗 <span id="revive-cost">100</span> 金币）</button>
+        <button id="btn-again" class="btn btn-primary">再来一局</button>
+        <button id="btn-menu" class="btn btn-ghost">返回主菜单</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+    <div id="touch-hint" class="touch-hint hidden">← 滑 变道 · ↑ 跳跃 · ↓ 滑铲 →</div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

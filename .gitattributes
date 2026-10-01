@@ -1,0 +1,16 @@
+# 统一行尾：仓库里一律存 LF，检出时不再按平台转换。
+# 不加这行的话，Windows 上 core.autocrlf=true 会让 git 每次操作都刷一堆
+# "LF will be replaced by CRLF" 警告，也容易和队友产生无意义的整文件 diff。
+* text=auto eol=lf
+
+# 二进制资源：明确禁止任何行尾 / 编码转换，免得媒体文件被改坏。
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.mp4  binary
+*.m4a  binary
+*.mp3  binary
+*.woff binary
+*.woff2 binary
