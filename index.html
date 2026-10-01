@@ -22,17 +22,26 @@
 <body>
   <script>
   /* 启动看门狗：如果 three.js 或 main.js 没能加载 / 初始化，
-     8 秒后显式报错，而不是留下一个「菜单看得见、所有按钮都没反应」的静默死界面。 */
+     显式报错，而不是留下一个「菜单看得见、所有按钮都没反应」的静默死界面。 */
   window.__nailongBooted = false;
-  window.__nailongFail = function (err) {
-    var msg = (err && (err.message || err)) || '未知错误';
+
+  // 取（必要时创建）底部横幅。level 用来说明这条横幅的性质：
+  // 'slow' = 还在加载（会自动消失），'fail' = 真失败（保留）。
+  window.__nailongBox = function (level) {
     var box = document.getElementById('boot-error');
     if (!box) {
       box = document.createElement('div');
       box.id = 'boot-error';
       (document.getElementById('game-container') || document.body).appendChild(box);
-      box.innerHTML = '<b>启动失败</b><pre></pre>';
     }
+    box.setAttribute('data-level', level);
+    return box;
+  };
+
+  window.__nailongFail = function (err) {
+    var msg = (err && (err.message || err)) || '未知错误';
+    var box = window.__nailongBox('fail');
+    box.innerHTML = '<b>启动失败</b><pre></pre>';
     var pre = box.querySelector('pre');
     if (pre) {
       pre.textContent = String(msg) +
@@ -42,14 +51,51 @@
         '3) 按 F12 看 Console 里的具体报错。';
     }
   };
-  window.addEventListener('error', function (e) {
-    if (!window.__nailongBooted) {
-      window.__nailongFail((e && (e.message || (e.target && e.target.src))) || 'resource error');
+
+  /* 8 秒还没起来时只提示「仍在加载」，不判死 ——
+     首次冷启动要从网络拉 main.js(203KB) + three.module.js(1.27MB)，
+     CDN 冷节点 / 慢网下十几秒到几十秒都属正常。 */
+  window.__nailongSlow = function () {
+    var box = document.getElementById('boot-error');
+    if (box && box.getAttribute('data-level') === 'fail') return;
+    box = window.__nailongBox('slow');
+    box.innerHTML = '<b>正在加载 3D 引擎…</b><pre></pre>';
+    var pre = box.querySelector('pre');
+    if (pre) {
+      pre.textContent = '首次打开需要下载约 1.5MB 的脚本（three.js 1.27MB + main.js 203KB），' +
+        '网络较慢时可能要等几十秒。加载完成后本提示会自动消失。';
     }
+  };
+
+  // 启动成功时收掉「正在加载」提示（真失败的横幅要留着，见 data-level）
+  window.__nailongClear = function () {
+    var box = document.getElementById('boot-error');
+    if (box && box.getAttribute('data-level') === 'slow') box.parentNode.removeChild(box);
+  };
+
+  /* 只有「关键资源」和「运行时异常」才算启动失败。
+     媒体（video / audio / img）加载失败不算 —— 游戏对这些资源本来就有降级：
+     结算视频缺失只是少一段动画，BGM 缺失会退回代码合成的琶音。
+     结算视频是 preload="metadata"、在 HTML 解析阶段就开始下载，网络一抖动就会失败，
+     旧版因此会把「其实已经启动成功」的页面误判成启动失败。 */
+  window.addEventListener('error', function (e) {
+    if (window.__nailongBooted) return;
+    var t = e.target;
+    if (t && t !== window && t.tagName) {
+      if (t.tagName === 'SCRIPT' || t.tagName === 'LINK') {
+        window.__nailongFail('关键资源加载失败：' + (t.src || t.href || t.tagName));
+      }
+      return;
+    }
+    window.__nailongFail((e && e.message) || 'unknown error');
   }, true);
+
+  setTimeout(function () { if (!window.__nailongBooted) window.__nailongSlow(); }, 8000);
+  // 真正的失败（脚本 404 / 语法错误）会被上面的 error 监听立刻抓到，
+  // 这个定时器只是「网络卡住、既不成功也不报错」的兜底，所以给足 60 秒。
   setTimeout(function () {
-    if (!window.__nailongBooted) window.__nailongFail('加载超时：脚本未能在 8 秒内完成初始化。');
-  }, 8000);
+    if (!window.__nailongBooted) window.__nailongFail('加载超时：脚本未能在 60 秒内完成初始化。');
+  }, 60000);
   </script>
   <div id="game-container">
     <canvas id="game-canvas"></canvas>

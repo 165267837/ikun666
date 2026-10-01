@@ -3333,6 +3333,7 @@ class GameManager {
       box.id = 'boot-error';
       (byId('game-container') || document.body).appendChild(box);
     }
+    box.setAttribute('data-level', 'fail');
     box.innerHTML = '';
     const t = document.createElement('b');
     t.textContent = title;
@@ -4055,6 +4056,9 @@ function __nailongBoot() {
     if (window.__nailongFail) window.__nailongFail(e);
     else console.error('[奶龙跑酷] 启动失败:', e);
   }
+  // 启动流程走完了：收掉看门狗在 8 秒时挂出的「正在加载」提示。
+  // 真失败的横幅（data-level="fail"）不会被收掉，见 UIManager._showBanner。
+  if (window.__nailongClear) window.__nailongClear();
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', __nailongBoot);
