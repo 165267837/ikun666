@@ -27,12 +27,13 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#bfe9ff;
   padding:calc(6px + env(safe-area-inset-top)) 12px 8px;}
 #menu button{pointer-events:auto;}
 
-/* 顶部标题栏（v3.9 瘦身：圆钮 38→30px，整条 header 让出 8px 高度） */
+/* 顶部标题栏（v3.9 瘦身：圆钮 38→30px，整条 header 让出 8px 高度）
+   右侧原「⋯ 关于本作」按钮已移除，.hdr-title 补 38px 右留白（=30px 圆钮 + 8px 间距）维持标题居中 */
 .game-header{width:100%;max-width:520px;display:flex;align-items:center;gap:8px;}
 .hdr-btn{width:30px;height:30px;flex:0 0 30px;border:none;border-radius:50%;background:rgba(255,255,255,.92);
   font-size:14px;font-weight:900;color:#5b4a7a;cursor:pointer;box-shadow:0 3px 0 rgba(140,110,190,.3);}
 .hdr-btn:active{transform:translateY(2px);}
-.hdr-title{flex:1;text-align:center;line-height:1.15;}
+.hdr-title{flex:1;text-align:center;line-height:1.15;padding-right:38px;}
 .hdr-name{font-size:13px;font-weight:900;color:#fff;text-shadow:0 2px 5px rgba(70,40,110,.55);}
 .hdr-ver{font-size:9px;font-weight:700;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(70,40,110,.5);}
 

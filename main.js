@@ -2927,7 +2927,7 @@ class UIManager {
       goScore: byId('go-score'), goDistance: byId('go-distance'), goCoins: byId('go-coins'), goBest: byId('go-best'),
       btnRevive: byId('btn-revive'), reviveCost: byId('revive-cost'), toast: byId('toast'), touchHint: byId('touch-hint'),
       // 主界面（按参考图布局）
-      btnSound: byId('btn-sound'), btnMusic: byId('btn-music'), btnAbout: byId('btn-about'),
+      btnSound: byId('btn-sound'), btnMusic: byId('btn-music'),
       btnCrown: byId('btn-crown'), btnPlus: byId('btn-plus'), btnRank: byId('btn-rank'),
       btnRandom: byId('btn-random'), btnBoost: byId('btn-boost'), boostSub: byId('boost-sub'),
       bRuns: byId('b-runs'), bSkins: byId('b-skins'), bAchv: byId('b-achv'),
@@ -3477,7 +3477,6 @@ class GameManager {
     // ---- 主界面顶栏 / 货币行 ----
     if (el.btnSound) el.btnSound.onclick = () => this._toggleSound();
     if (el.btnMusic) el.btnMusic.onclick = () => this._toggleMusic();
-    if (el.btnAbout) el.btnAbout.onclick = () => this._showAbout();
     if (el.btnCrown) el.btnCrown.onclick = () => this._showCrown();
     if (el.btnPlus) el.btnPlus.onclick = () => this._showCoinHelp();
     if (el.btnRank) el.btnRank.onclick = () => this._openTab('rank');
@@ -3724,32 +3723,6 @@ class GameManager {
       '<div class="item owned"><div class="item-info"><div class="item-name">兑换码</div>' +
       '<div class="item-desc">打开「⚙️ 游戏设置 → 兑换码」，输入兑换码即可直接领取金币。</div></div></div>' +
       '</div><p class="modal-note">本作为学习原型，暂无内购。</p>');
-  }
-  _showAbout() {
-    this.ui.openModal('⋯ 关于本作', '<div class="list">' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">奶龙跑酷 · 竹墨松林</div>' +
-      '<div class="item-desc">Three.js r160 单文件 3D 无限跑酷原型 · v4.3 · 第 1 赛季「竹墨松林」</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">操作方式</div>' +
-      '<div class="item-desc">← → 变道 · ↑ 跳跃 · ↓ 滑铲 · 空格暂停；触屏滑动同样有效。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">障碍物（照「地铁跑酷」做）</div>' +
-      '<div class="item-desc">黄黑「施工路障」跳过去；「限高门架」只留 3 米以下的洞，直接跑过去就行、千万别跳；彩色的「地铁车厢」分两种车高 —— 低矮款（车顶 ' + CONFIG.TRAIN_ROOF_LOW + ' 米）跳得上去，标准款（' + CONFIG.TRAIN_ROOF + ' 米）只能变道躲；「集装箱围挡」也只能变道躲。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">上车顶（照「地铁跑酷」）</div>' +
-      '<div class="item-desc">低矮的地铁车厢可以跳上车顶跑：车顶两侧画着黄条的就是「能上」的，车顶还铺着一串金币等着收。标准车厢有 ' + CONFIG.TRAIN_ROOF + ' 米高、跳不上去，只能变道躲 —— 或者先站上矮车顶，再从车顶补跳一次「接力」上去。车顶金币只有站上车顶才吃得到，站在地面上是够不着的。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">赛道机关（踩上去触发）</div>' +
-      '<div class="item-desc">青蓝箭头「加速带」踩了往前冲（×' + CONFIG.PAD_BOOST_MULT + '）；粉色「弹跳板」踩了弹到 3.3 米，用来吃空中金币弧线。机关前方 ' + CONFIG.PAD_CLEAR + ' 米内必定没有障碍，不会变成陷阱。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">冲刺段</div>' +
-      '<div class="item-desc">从 ' + CONFIG.RUSH_FIRST + ' 米起，每 ' + CONFIG.RUSH_EVERY + ' 米出现一段 ' + CONFIG.RUSH_LENGTH + ' 米的冲刺段：障碍加密、速度 ×' + CONFIG.RUSH_SPEED_MULT + '、金币 ×' + CONFIG.RUSH_COIN_MULT + '，跑完额外 +' + CONFIG.RUSH_BONUS + ' 分。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">玩法系统</div>' +
-      '<div class="item-desc">' + SKINS.length + ' 套皮肤 · 5 项永久强化 · ' + ACHIEVEMENTS.length + ' 个成就 · 4 种道具 · 8 张地图（阳光漫游 4 张 + 竹墨松林 4 张，每 ' + CONFIG.THEME_DISTANCE + ' 米换一张） · ' + CONFIG.REDEEM_CODES.length + ' 个兑换码 · 本地排行榜</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">兑换码</div>' +
-      '<div class="item-desc">在「⚙️ 游戏设置 → 兑换码」输入即可领取金币。同一个码在每台设备上<b>只能兑一次</b>（记录写在本地存档里），输入时忽略空格、英文不区分大小写。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">背景音乐</div>' +
-      '<div class="item-desc">循环播放 <b>' + CONFIG.BGM_SRC + '</b>（音量 ' + Math.round(CONFIG.BGM_VOLUME * 100) + '%），主界面右上角 🎵 可随时开关。暂停 / 结算时暂停、继续时从原处接着放。该文件缺失或解不开时，自动退回代码合成的 8 音琶音，游戏不会变哑。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">结算动画</div>' +
-      '<div class="item-desc">死亡后的结算界面顶部会循环播放 <b>libs/gameover.mp4</b>。它<b>静音</b>播放 —— 背景音乐是全局的，两条音轨同时响会打架；并且只在结算界面可见时播放，一离开就暂停（不会在后台空转）。</div></div></div>' +
-      '<div class="item owned"><div class="item-info"><div class="item-name">素材说明</div>' +
-      '<div class="item-desc">几何体与音效均由代码实时生成；背景音乐是 ' + CONFIG.BGM_SRC + '、结算视频是 libs/gameover.mp4，两者都是本地媒体文件。均可替换为正式 GLTF 模型 / 正式配乐。</div></div></div>' +
-      '</div><p class="modal-note">仅用于个人学习与原型测试，公开商用前请获得「奶龙」版权授权。</p>');
   }
   _showCrown() {
     const d = this.save.data, best = int(this.save.data.best);
