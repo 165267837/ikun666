@@ -6,8 +6,8 @@
  * 或 `fetch('/api')` 之类的根相对请求，在本地 `node serve.cjs`（根目录 = /）下
  * 完全测不出来，一上线就 404 白屏。
  *
- * 做法：把「真正会推送的那份文件」复制到 <临时根>/nailong-parkour/，
- * 用本地服务把 <临时根> 当网站根 → 访问 /nailong-parkour/ 就等价于线上环境。
+ * 做法：把「真正会推送的那份文件」复制到 <临时根>/ikun666/，
+ * 用本地服务把 <临时根> 当网站根 → 访问 /ikun666/ 就等价于线上环境。
  * 跑完自动清理。
  */
 const http = require('http');
@@ -17,7 +17,7 @@ const { spawn } = require('child_process');
 
 const ROOT = __dirname;
 const STAGE = path.join(ROOT, '__subpath_stage');
-const SUB = 'nailong-parkour';
+const SUB = 'ikun666';
 const PORT = 5190;
 const EDGE = 'C://Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const CDP_PORT = 9351;
@@ -31,7 +31,7 @@ const MIME = {
   '.m4a': 'audio/mp4', '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.ico': 'image/x-icon',
 };
 
-// ---- 1. 导出「会上传的那份」到 <stage>/nailong-parkour/ ----
+// ---- 1. 导出「会上传的那份」到 <stage>/ikun666/ ----
 // 只搬部署必需的顶层条目；正好也是 .gitignore 之外、线上真正会被请求的东西。
 const DEPLOY_ITEMS = ['index.html', 'style.css', 'main.js', 'libs'];
 fs.rmSync(STAGE, { recursive: true, force: true });
@@ -51,11 +51,11 @@ for (const item of DEPLOY_ITEMS) {
 }
 console.log('已导出部署产物到 ' + path.relative(ROOT, dest) + '：' + copied + ' 个文件 / ' + (bytes / 1048576).toFixed(2) + ' MB');
 
-// ---- 2. 起静态服务，网站根 = STAGE（所以游戏在 /nailong-parkour/ 子路径下）----
+// ---- 2. 起静态服务，网站根 = STAGE（所以游戏在 /ikun666/ 子路径下）----
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
   // GitHub Pages 会把「以 / 结尾的目录请求」自动映射到该目录下的 index.html，
-  // 这里的临时服务器必须照做 —— 否则 /nailong-parkour/ 会直接 404，
+  // 这里的临时服务器必须照做 —— 否则 /ikun666/ 会直接 404，
   // 测出来的失败是「服务器不像 Pages」而不是「游戏不能部署」。
   if (p.endsWith('/')) p += 'index.html';
   const file = path.join(STAGE, path.normalize(p).replace(/^(\.\.[\\/])+/, ''));

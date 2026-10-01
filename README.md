@@ -3,7 +3,7 @@
 一个用 **Three.js（r160）** 手写的 3D 无限跑酷小游戏。**纯静态单页**，没有任何后端：
 只要能把 `index.html` / `style.css` / `main.js` / `libs/` 放到一个静态服务器上，就能玩。
 
-**🎮 在线试玩：** https://<你的用户名>.github.io/nailong-parkour/
+**🎮 在线试玩：** https://<你的用户名>.github.io/ikun666/
 
 > 手机竖屏就是目标比例（约 9:16），桌面浏览器也能玩。首次进入需要点一下「开始 / 开跑」
 > —— 这是浏览器的自动播放策略要求，不是 bug。
@@ -73,7 +73,7 @@ preview/            截图产物
 
 ## 部署到 GitHub Pages
 
-1. 在 GitHub 上新建一个 **public** 仓库，名字建议就叫 `nailong-parkour`（不要勾选任何初始化文件）。
+1. 在 GitHub 上新建一个 **public** 仓库，名字建议就叫 `ikun666`（不要勾选任何初始化文件）。
 2. 在本目录下执行：
 
    ```bash
@@ -82,7 +82,7 @@ preview/            截图产物
    git config user.email "你的邮箱"
    git add -A
    git commit -m "feat: 奶龙跑酷 3D 无限跑酷游戏"
-   git remote add origin https://github.com/<你的用户名>/nailong-parkour.git
+   git remote add origin https://github.com/<你的用户名>/ikun666.git
    git push -u origin main
    ```
 
@@ -90,6 +90,6 @@ preview/            截图产物
 
 3. 打开仓库的 **Settings → Pages**，把 **Source** 设为 `Deploy from a branch`，
    **Branch** 选 `main` / `/ (root)`，保存。
-4. 等 1~2 分钟，访问 **https://<你的用户名>.github.io/nailong-parkour/** 即可。
+4. 等 1~2 分钟，访问 **https://<你的用户名>.github.io/ikun666/** 即可。
 
 之后每次改完代码，只要 `git add -A && git commit -m "..." && git push`，Pages 会自动重新发布。

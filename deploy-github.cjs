@@ -29,7 +29,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = __dirname;
-const REPO_NAME = 'nailong-parkour';          // 想换仓库名就改这里
+const REPO_NAME = 'ikun666';          // 想换仓库名就改这里
 const REQUIRED = ['index.html', 'style.css', 'main.js', 'libs/three.module.js'];
 
 /** 跑一条命令跑不跑得起来 + 拿它的输出（不打印）。 */
